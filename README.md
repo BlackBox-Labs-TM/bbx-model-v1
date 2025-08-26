@@ -6,15 +6,23 @@ Building up on codeGPTSensor from "Distinguishing LLM-generated from Human-writt
 ## Dependencies
 We support Ubuntu 22.04 (native or via WSL on Windows) and macOS (CPU/MPS; CUDA not available on macOS).
 Required:
+
 Python 3.9 (via Miniconda recommended)
+
 PyTorch 2.5.1 (GPU optional)
+
 CUDA Toolkit 11.8 + recent NVIDIA driver (Linux/WSL only)
+
 Git
 ### Useful links
 Miniconda (recommended): https://www.anaconda.com/docs/getting-started/miniconda/install
+
 PyTorch “Get Started” selector (choose your OS + CUDA 11.8 or CPU): https://pytorch.org/get-started/previous-versions/
+
 CUDA Toolkit downloads (select Version 11.8 for your OS): https://developer.nvidia.com/cuda-11-8-0-download-archive
+
 Ubuntu 22.04 LTS: https://releases.ubuntu.com/22.04/
+
 Windows users: install WSL (Ubuntu 22.04) → https://learn.microsoft.com/windows/wsl/install
 
 
