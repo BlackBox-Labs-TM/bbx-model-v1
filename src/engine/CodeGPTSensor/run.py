@@ -245,12 +245,32 @@ def evaluate(args, model, tokenizer, data_file):
     logits = np.concatenate(logits,0)
     labels = np.concatenate(labels,0)
 
-    preds = logits[:, 1] > 0.5
+    ## Original code if new change doesnt work you can uncomment this
+    
+    # preds = logits[:, 1] > 0.5
+    # acc = accuracy_score(labels, preds)
+    # recall = recall_score(labels, preds)
+    # precision = precision_score(labels, preds)
+    # f1 = f1_score(labels, preds)
+    # roc_auc = roc_auc_score(labels, logits[:, 1])
+    
+    ## Code below is to parse argument from command line to change the probability threshold to classify as AI or Human
+    
+    if logits.ndim == 2 and logits.shape[1] == 2:
+        probs = logits[:, 1]
+    else:
+        # single-logit case
+        probs = 1.0 / (1.0 + np.exp(-logits.reshape(-1)))
+
+    # Use CLI threshold if present; otherwise default to 0.60
+    threshold = getattr(args, "threshold", 0.60)
+    preds = (probs >= threshold).astype(int)
+
     acc = accuracy_score(labels, preds)
     recall = recall_score(labels, preds)
     precision = precision_score(labels, preds)
     f1 = f1_score(labels, preds)
-    roc_auc = roc_auc_score(labels, logits[:, 1])
+    roc_auc = roc_auc_score(labels, probs)
     
     TP = 0
     FP = 0
@@ -282,6 +302,14 @@ def evaluate(args, model, tokenizer, data_file):
         "FPR": float(FPR),
         "FNR": float(FNR)
     }
+    # Optional: dump per-sample probabilities if --dump_preds is passed
+    # The code below writes a JSONL with idx, y_true, p_ai, so you can have a look after eval for weird stuff
+    dump_path = getattr(args, "dump_preds", "")
+    if dump_path:
+        with open(dump_path, "w") as w:
+            for i, (p, y) in enumerate(zip(probs, labels)):
+                w.write(json.dumps({"idx": i, "y_true": int(y), "p_ai": float(p)}) + "\n")
+        logger.info(f"Wrote per-sample predictions to {dump_path}")
     return results, eval_loss
 
                  
@@ -320,7 +348,12 @@ def main():
     parser.add_argument('--seed', type=int, default=42,
                         help="Random seed for initialization.")
     parser.add_argument('--contrast', action='store_true',
-                        help="Whether to use the contrast sample.") 
+                        help="Whether to use the contrast sample.")
+    parser.add_argument("--threshold", type=float, default=0.50,
+                    help="Decision threshold for AI class when computing metrics.")
+    parser.add_argument("--dump_preds", type=str, default="",
+                    help="Optional JSONL path to dump per-sample probabilities (idx, y_true, p_ai).")
+
     
     # Print arguments
     args = parser.parse_args()
